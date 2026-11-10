@@ -6,76 +6,38 @@
 
     <groupId>de.aufgabenmanagement</groupId>
     <artifactId>aufgabenmanagement</artifactId>
-    <version>1.0.0</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
-    <name>Aufgabenmanagement</name>
-    <description>Mehrsprachige Konsolenanwendung zur Aufgabenverwaltung (de/fr/en)</description>
-
     <properties>
+        <!-- Java 17 oder neuer -->
         <maven.compiler.release>17</maven.compiler.release>
+        <!-- Quellcode und.properties-Dateien sind UTF-8 kodiert (Umlaute, Akzente) -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <main.class>de.aufgabenmanagement.Main</main.class>
-        <junit.version>5.10.2</junit.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
     <build>
-        <!-- Produces target/application.jar -->
-        <finalName>application</finalName>
-
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-
+        <!-- Name der JAR-Datei: target/aufgabenmanagement.jar -->
+        <finalName>aufgabenmanagement</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
+                <version>3.13.0</version> <!-- Version mise à jour -->
                 <configuration>
                     <release>${maven.compiler.release}</release>
-                    <encoding>UTF-8</encoding>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
-                <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <!-- The application has no runtime dependencies, so a plain JAR
-                     with a Main-Class manifest entry is fully self-contained. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>3.4.2</version>
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>${main.class}</mainClass>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                            <!-- Einstiegspunkt für "java -jar" -->
+                            <mainClass>aufgabenmanagement.AufgabenManagement</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

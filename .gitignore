@@ -1,5 +1,2 @@
 target/
 config.properties
-*.iml
-.idea/
-.vscode/
