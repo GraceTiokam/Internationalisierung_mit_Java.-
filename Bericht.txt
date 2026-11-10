@@ -1,0 +1,397 @@
+PROJEKTBERICHT
+Aufgabenmanagement – Internationalisierung einer Java-Konsolenanwendung
+========================================================================
+
+
+1. EINLEITUNG UND AUFGABENSTELLUNG
+------------------------------------------------------------------------
+
+1.1 Projekt
+
+Ausgangspunkt des Projekts war die bestehende Konsolenanwendung
+AufgabenManagement.java. Das Programm gibt zu Beginn ein Sprichwort mit
+dem aktuellen Datum sowie einen Lizenzhinweis mit einem Geldbetrag aus.
+Anschließend werden die Daten eines Beraters abgefragt (Name, Geschlecht,
+Aufgabenbereich, Anzahl erledigter Aufgaben, Vergütung pro Aufgabe,
+gewünschter Rabatt) und in einer Aufgabenübersicht ausgegeben. Alle Texte
+waren ursprünglich fest auf Deutsch im Quellcode hinterlegt.
+
+1.2 Aufgabenstellung
+
+Die Aufgabenstellung lautete:
+
+  - Das Programm soll internationalisiert werden und zur Laufzeit zwischen
+    Englisch, Französisch und Deutsch umgeschaltet werden können.
+  - Die Startsprache kann auf drei Arten festgelegt werden:
+      1. über die Kommandozeile,
+      2. über die zuletzt eingestellte Sprache aus einer Config-Datei
+         (mit der Klasse Properties oder etwas Ähnlichem),
+      3. über die Sprache der JVM.
+  - Auf eine gute Softwarearchitektur und Softwarequalität ist zu achten.
+  - Mit Maven ist eine ausführbare (runnable) JAR-Datei zu erstellen.
+
+
+2. ENTWICKLUNGSVERLAUF UND MILESTONES
+------------------------------------------------------------------------
+
+Die folgenden Schritte sind aus den Projektunterhaltungen, der
+Git-Historie und dem finalen Quellcode rekonstruiert.
+
+Milestone 1 – Erster, umfangreicher Entwurf (05.11.)
+  In einer ersten KI-Sitzung entstand ein eigenständiges Maven-Projekt
+  mit vielen Klassen im Paket de.aufgabenmanagement (u. a. Main,
+  TaskManager, ConsoleUI, ConfigManager, Language, LanguageResolver,
+  LanguageManager) sowie JUnit-5-Tests. Dieses Projekt wurde in mein
+  GitHub-Repository Java3 übertragen (Commit 072d365). Der Entwurf
+  bildete jedoch eine neue, menübasierte Aufgabenverwaltung nach und
+  baute nicht auf dem vorhandenen AufgabenManagement.java auf. Er war
+  außerdem für den Umfang der Aufgabe zu komplex. Übernommen wurden
+  daraus vor allem die Grundideen: eine eigene Klasse LanguageManager für
+  die Sprachverwaltung und eine Datei config.properties für die
+  gespeicherte Sprache.
+
+Milestone 2 – Neubeginn auf Basis des Originalprogramms (05.11. abends)
+  Ich habe die Anforderungen neu und genauer formuliert: Das vorhandene
+  AufgabenManagement.java sollte Grundlage bleiben, die Lösung sollte
+  einfach und erklärbar sein, und als Struktur waren die Klassen
+  AufgabenManagement und LanguageManager, drei Sprachdateien und eine
+  config.properties vorgesehen. Ergebnis war ein Maven-Projekt mit zwei
+  Klassen, ResourceBundle-basierten Sprachdateien (de, fr, en),
+  Startsprachen-Ermittlung, Laufzeit-Umschaltung und Speicherung über
+  Properties. Auf meinen Wunsch wurde der LanguageManager danach testweise
+  vollständig in die Klasse AufgabenManagement integriert.
+
+Milestone 3 – Wrapper nach dem Vorbild der Übung (06.11.)
+  In einer weiteren Sitzung habe ich die Lösung aus der Übung
+  (ExerciseI18NSolutionWithWrapper) als Vorlage mitgegeben, mit dem Ziel,
+  die gesamte Locale-Logik zu kapseln. Daraus entstand die heutige
+  Grundstruktur:
+    - LanguageManager als Wrapper mit den Methoden t(key) und
+      t(key, args...),
+    - Paket aufgabenmanagement,
+    - eine Datei AufgabenManagement.java, die neben der öffentlichen
+      Klasse AufgabenManagement die nicht-öffentliche Klasse
+      LanguageManager enthält (analog zur Klasse I18N in der Übung).
+  Zusätzlich habe ich mir die Lösung erklären lassen, um sie vorstellen
+  zu können.
+
+Milestone 4 – Umsetzung der Rückmeldungen des Professors (09.11.)
+  Die Rückmeldungen des Professors habe ich als Kommentare im Code
+  festgehalten und anschließend bearbeiten lassen:
+    - Währung abhängig von der Locale statt eines festen „€“,
+    - Beachtung von Unicode/UTF-8 und kultureller Anpassung,
+    - aussagekräftigere Methoden- und Variablennamen,
+    - Auslagern der do-while-Schleife (Übersicht + Sprachwechsel) aus
+      main() in eine eigene Methode,
+    - ein Aufzählungstyp (enum) statt eines boolean für das Geschlecht,
+    - Aktualisierung der pom.xml und Prüfung der Plugin-Versionen mit
+      mvn versions:display-plugin-updates.
+  In zwei Sitzungen entstanden dazu Varianten, darunter eine stark
+  erweiterte Fassung (zusätzliche Klassen wie ConsoleInput und ein enum
+  Language, JUnit-Tests, maven-enforcer-plugin).
+
+Milestone 5 – Konsolidierter Endstand (10.11., Commit 8c64084)
+  Den finalen Stand habe ich in meinem Repository zusammengeführt und
+  eingecheckt. Dabei wurde die einfache Struktur aus Milestone 3
+  beibehalten und um ausgewählte Punkte aus Milestone 4 ergänzt
+  (enum Gender, Methode runOverviewLoop, Währungsformat
+  {0,number,currency}, Einzahl/Mehrzahl mit choice). Die stark erweiterte
+  Fassung (zusätzliche Klassen, Tests, Enforcer-Plugin) wurde nicht
+  übernommen. Die alten Klassen aus Milestone 1 wurden aus dem Repository
+  entfernt, die pom.xml auf das Notwendige reduziert, die Sprachdateien
+  überarbeitet und das README aktualisiert.
+
+
+3. TECHNISCHE UMSETZUNG
+------------------------------------------------------------------------
+
+3.1 Internationalisierung und Sprachressourcen
+
+Alle sichtbaren Texte liegen in drei Ressourcendateien unter
+src/main/resources:
+
+  - messages_de.properties
+  - messages_fr.properties
+  - messages_en.properties
+
+Jede Datei enthält dieselben 40 Schlüssel, gegliedert nach Bereichen:
+
+  - app.*              Titel und Abschiedstext
+  - proverb.*          Einleitung und vier Sprichwörter je Sprache
+                       (sprachtypische Sprichwörter, keine wörtlichen
+                       Übersetzungen)
+  - license.warning    Lizenzhinweis mit Betrag
+  - language.*         aktuelle Sprache, Herkunft der Startsprache,
+                       Eingabeaufforderungen und Bestätigung beim Wechsel
+  - input.*            Eingabeaufforderungen
+  - gender.*, title.*  Eingabekürzel (m/w, h/f, m/f) und Anreden
+                       (Herr/Frau, M./Mme, Mr/Ms)
+  - overview.*         Texte der Aufgabenübersicht
+  - error.*            Fehler- und Warnmeldungen
+
+Platzhalter werden mit java.text.MessageFormat und der aktuellen Locale
+formatiert. Dadurch werden Datum, Uhrzeit, Zahlen und Währungen
+sprachabhängig dargestellt, z. B.:
+
+  - {0,date,full} / {0,date,medium}  Datum
+  - {0,time,short}                    Uhrzeit
+  - {0,number,currency}               Geldbetrag mit Währung der Locale
+  - {0,number,0.##}                   Prozentwert des Rabatts
+  - {1,choice,0#...|1#...|1<...}      Einzahl/Mehrzahl bei der Anzahl der
+                                      Aufgaben (overview.tasks)
+
+Die Sprachcodes werden auf Locales mit Land abgebildet (de → de-DE,
+fr → fr-FR, en → en-GB), damit Zahlen- und Währungsformate eindeutig sind.
+Beim Wechsel ändert sich nur die Darstellung der Währung (€ bzw. £), es
+findet keine Umrechnung des Betrags statt.
+
+Da ein einfaches Hochkomma (') in MessageFormat als Escape-Zeichen dient,
+wurde im Projektverlauf festgelegt, in den Texten kein einfaches
+Hochkomma zu verwenden, sondern ein typografisches Apostroph.
+
+3.2 Sprachumschaltung zur Laufzeit
+
+Die Sprache kann an zwei Stellen gewechselt werden, die sich an den
+Sprachabfragen des ursprünglichen Programms orientieren:
+
+  1. Vor der Dateneingabe (Schlüssel language.prompt.start): Eingabe von
+     de, fr oder en; Enter behält die aktuelle Sprache bei.
+  2. Nach der Aufgabenübersicht (Schlüssel language.prompt.end): Nach
+     einem gültigen Sprachcode wird die Übersicht sofort in der neuen
+     Sprache erneut ausgegeben; Enter beendet das Programm.
+
+Umgesetzt ist dies in der Methode askForLanguageChange(promptKey). Sie
+ruft LanguageManager.switchLanguage(...) auf und gibt true zurück, wenn
+die Sprache gewechselt wurde. Ungültige Eingaben führen zu einer
+übersetzten Fehlermeldung und einer erneuten Abfrage.
+
+Die Wiederholung der Übersicht übernimmt die Methode runOverviewLoop:
+
+  do {
+      printOverview(...);
+  } while (askForLanguageChange("language.prompt.end"));
+
+Die eingegebenen Daten bleiben dabei erhalten; nur die Texte werden aus
+dem neu geladenen ResourceBundle gelesen. Auch die Eingabekürzel für das
+Geschlecht kommen aus den Sprachdateien, sodass die Abfrage zur jeweils
+aktiven Sprache passt.
+
+3.3 Auswahl der Startsprache
+
+Die Methode LanguageManager.init(String[] args) prüft die Quellen in
+folgender Reihenfolge:
+
+  1. erstes Kommandozeilenargument (z. B. java -jar ... fr),
+  2. Eintrag language in config.properties,
+  3. Sprache der JVM (Locale.getDefault().getLanguage()),
+  4. andernfalls Deutsch als Standardsprache (FALLBACK_LANGUAGE = "de").
+
+Es wird die erste Quelle verwendet, die einen unterstützten Code (de, fr,
+en; Groß-/Kleinschreibung egal) liefert. Ungültige Werte im Argument oder
+in der Config-Datei werden ignoriert. Die zugehörigen Warnungen werden
+erst nach dem Laden des Bundles ausgegeben, damit sie bereits in der
+ermittelten Sprache erscheinen. Die erste Ausgabezeile zeigt die aktive
+Sprache und ihre Herkunft an (Schlüssel language.source.*).
+
+Das Bundle wird mit ResourceBundle.Control.getNoFallbackControl(...)
+geladen. Dadurch weicht Java nicht stillschweigend auf die Systemsprache
+aus, sondern lädt genau die gewählte Sprachdatei.
+
+3.4 LanguageManager
+
+LanguageManager ist eine finale, nicht-öffentliche Klasse in der Datei
+AufgabenManagement.java und bündelt die gesamte Sprachlogik in
+statischen Methoden:
+
+  - init(args)             Startsprache ermitteln und Bundle laden
+  - switchLanguage(code)   Sprache prüfen, Bundle neu laden und in
+                           config.properties speichern
+  - isSupported(code)      Prüfung auf de, fr oder en
+  - t(key)                 Text ohne Platzhalter liefern; fehlt ein
+                           Schlüssel, wird "#key missing#" ausgegeben
+                           statt einer Exception
+  - t(key, args...)        Text mit MessageFormat und aktueller Locale
+                           formatieren
+
+Intern verwaltet die Klasse den aktuellen Sprachcode, die Locale und das
+ResourceBundle sowie die privaten Hilfsmethoden normalize, loadBundle,
+toLocale, loadLanguageFromConfig und saveLanguageToConfig.
+
+Die übrigen Programmteile greifen ausschließlich über t(...) auf Texte
+zu. In AufgabenManagement wird t per statischem Import eingebunden
+(import static aufgabenmanagement.LanguageManager.t), z. B.:
+
+  System.out.println(t("overview.date", now));
+
+3.5 Speicherung der Sprache mit Properties und config.properties
+
+Für die zuletzt gewählte Sprache wird die Klasse java.util.Properties
+verwendet, wie in der Aufgabenstellung vorgeschlagen. Sie liest und
+schreibt einfache Schlüssel-Wert-Dateien ohne zusätzliche Bibliotheken.
+
+  - Datei:       config.properties im aktuellen Arbeitsverzeichnis
+                 (außerhalb der JAR, damit sie beschreibbar bleibt)
+  - Inhalt:      ein Eintrag, z. B. language=fr, plus Kommentarzeile
+  - Schreiben:   bei jedem erfolgreichen Sprachwechsel in
+                 saveLanguageToConfig() mit Properties.store(...);
+                 die Datei wird dabei angelegt, falls sie fehlt.
+                 Schlägt das Schreiben fehl, erscheint die Meldung
+                 error.config.save, das Programm läuft weiter.
+  - Lesen:       beim Start in loadLanguageFromConfig() mit
+                 Properties.load(...). Fehlt die Datei oder ist sie
+                 nicht lesbar, wird null geliefert und die nächste
+                 Quelle (JVM-Sprache) verwendet.
+
+Beim nächsten Start ohne Kommandozeilenargument wird so die zuletzt
+gewählte Sprache wiederhergestellt. Ein Kommandozeilenargument hat
+Vorrang, überschreibt die Datei aber nicht; gespeichert wird nur bei
+einem Wechsel im Programm.
+
+3.6 Kapselung und Softwarearchitektur
+
+Der finale Stand besteht aus:
+
+  src/main/java/aufgabenmanagement/AufgabenManagement.java
+    - public class AufgabenManagement: Programmablauf, Eingabe und
+      Ausgabe (main, runOverviewLoop, printOverview,
+      askForLanguageChange, readText, readGender, readTaskCount,
+      readNonNegativeDouble, readLine) sowie enum Gender {MALE, FEMALE}
+    - final class LanguageManager: gesamte I18N-Logik (siehe 3.4)
+  src/main/resources/messages_de|fr|en.properties
+  pom.xml
+
+Lokalisiert wurden alle sichtbaren Texte: Titel, Sprichwörter,
+Lizenzhinweis, Eingabeaufforderungen, Anreden, Geschlechtskürzel,
+Übersichtstexte, Bestätigungen sowie Fehler- und Warnmeldungen. Im
+Java-Code stehen nur noch Schlüssel. Zusätzlich sind Datum, Uhrzeit,
+Zahlen und Währung über die Locale lokalisiert.
+
+Die Trennung bewirkt:
+  - Programmlogik und Texte sind unabhängig voneinander änderbar.
+  - Nur LanguageManager kennt ResourceBundle, Locale, Properties und die
+    Config-Datei. Der restliche Code ist von diesen Details entkoppelt.
+  - Eine weitere Sprache erfordert im Wesentlichen eine neue
+    messages_xx.properties sowie die Erweiterung von isSupported und
+    toLocale.
+  - Das enum Gender ersetzt den früheren boolean-Wert und macht die
+    Auswahl der Anrede (title.male / title.female) eindeutig.
+
+Bewusst wurde auf eine weitere Aufteilung in viele Klassen verzichtet, um
+die Lösung übersichtlich und erklärbar zu halten (vgl. Milestones 1 und 5).
+
+
+4. MAVEN UND AUSFÜHRBARE JAR-DATEI
+------------------------------------------------------------------------
+
+4.1 Konfiguration (pom.xml)
+
+  - groupId de.aufgabenmanagement, artifactId aufgabenmanagement,
+    version 1.0, packaging jar
+  - maven.compiler.release = 17 (Java 17 oder neuer)
+  - project.build.sourceEncoding = UTF-8
+  - finalName aufgabenmanagement → target/aufgabenmanagement.jar
+  - Plugins:
+      * maven-compiler-plugin 3.13.0 (Release 17, Kodierung UTF-8)
+      * maven-jar-plugin 3.4.2 mit Manifest-Eintrag
+        mainClass = aufgabenmanagement.AufgabenManagement
+  - Keine externen Abhängigkeiten. Da nur die Java-Standardbibliothek
+    verwendet wird, genügt eine einfache JAR mit Main-Class-Eintrag;
+    ein Fat-JAR-Plugin ist nicht nötig.
+
+Die Sprachdateien aus src/main/resources werden von Maven automatisch in
+die JAR übernommen.
+
+Im Verlauf (Milestone 4) wurde die Prüfung der Plugin-Versionen mit
+mvn versions:display-plugin-updates besprochen. Eine dabei erarbeitete,
+umfangreichere pom.xml (u. a. mit maven-enforcer-plugin) wurde im
+Endstand nicht übernommen.
+
+4.2 Erstellung und Ausführung
+
+  Bauen:
+    mvn clean package
+
+  Starten:
+    java -jar target/aufgabenmanagement.jar        (Sprache automatisch)
+    java -jar target/aufgabenmanagement.jar fr     (Französisch)
+    java -jar target/aufgabenmanagement.jar en     (Englisch)
+
+Werden Sonderzeichen in der Konsole falsch dargestellt, liegt dies an der
+Kodierung der Konsole. Abhilfe unter Windows: vorher chcp 65001
+ausführen bzw. java -Dstdout.encoding=UTF-8 -jar ... verwenden.
+
+
+5. VERWENDUNG VON KI WÄHREND DER ENTWICKLUNG
+------------------------------------------------------------------------
+
+Während der Entwicklung habe ich einen KI-Assistenten (Claude Code)
+eingesetzt. Die Nutzung ist in mehreren Sitzungen vom 05.11. bis 09.11.
+nachvollziehbar. Ein Teil der Commits trägt einen entsprechenden
+Co-Author-Vermerk.
+
+5.1 Eigene Entscheidungen und Arbeitsschritte
+
+  - Bereitstellung des Ausgangsprogramms AufgabenManagement.java und der
+    Übungslösung ExerciseI18NSolutionWithWrapper als Vorlage.
+  - Formulierung der Anforderungen an die KI: Aufbau auf dem
+    Originalprogramm, einfache und erklärbare Lösung, Prioritätsreihenfolge
+    der Startsprache, Deutsch als Standardsprache.
+  - Verwerfen des ersten, zu komplexen Entwurfs (Milestone 1).
+  - Entscheidung für eine einzige Quelldatei mit gekapseltem
+    LanguageManager.
+  - Übertragen der Rückmeldungen des Professors in konkrete
+    Änderungswünsche und Beantwortung der Rückfragen der KI (z. B. zur
+    Währung pro Land).
+  - Auswahl, welche der vorgeschlagenen Änderungen in den Endstand
+    übernommen wurden, und Zusammenführung des finalen Stands in meinem
+    Repository (Commit vom 10.11.).
+
+5.2 Vorschläge und Erklärungen der KI
+
+  - LanguageManager: Vorschlag einer zentralen Klasse, die
+    Startsprache, ResourceBundle, Sprachwechsel und Speicherung bündelt.
+  - config.properties: Empfehlung, die zuletzt gewählte Sprache in
+    einer eigenen Konfigurationsdatei im Arbeitsverzeichnis zu speichern.
+  - Properties: Erklärung von Properties.load/store sowie des Umgangs mit
+    fehlenden oder fehlerhaften Dateien.
+  - Kapselung: Erklärung, warum der restliche Code nur über t(...) auf
+    Texte zugreift, sowie Hinweise zu MessageFormat (Apostroph-Regel,
+    Formatierung von Datum, Zahl und Währung, Verwendung von
+    getNoFallbackControl).
+  - Erklärungen zur Präsentation der Lösung (auf Französisch und Deutsch).
+
+5.3 Technische Unterstützung bei der Umsetzung
+
+  - Die KI hat in den Sitzungen Quellcode, Sprachdateien, pom.xml und
+    README erstellt bzw. überarbeitet, das Projekt gebaut und die
+    Programmabläufe (drei Sprachen, Reihenfolge der Startsprache,
+    Sprachwechsel, Speicherung) in ihrer Umgebung ausprobiert.
+  - Bei der Umsetzung der Rückmeldungen (Milestone 4) hat die KI das
+    enum Gender, die ausgelagerte Schleife, das Währungsformat und die
+    Prüfung der Maven-Plugin-Versionen umgesetzt.
+  - Die Überarbeitung der Lokalisierung, also das Herauslösen aller
+    festen Texte aus dem Code in die Sprachdateien, wurde mit
+    KI-Unterstützung durchgeführt.
+
+Die KI war damit maßgeblich an der Erstellung des Codes beteiligt. Die
+Vorgaben, die Auswahl zwischen den Varianten und die Zusammenstellung
+des Endstands lagen bei mir.
+
+
+6. ABSCHLUSS
+------------------------------------------------------------------------
+
+Der finale Stand ist eine Maven-basierte Konsolenanwendung, deren Texte
+vollständig über ResourceBundle aus drei Sprachdateien geladen werden.
+Bezogen auf die Aufgabenstellung ist Folgendes umgesetzt:
+
+  - Umschaltung zwischen Deutsch, Französisch und Englisch zur Laufzeit,
+    vor der Eingabe und nach der Übersicht.
+  - Startsprache in der Reihenfolge Kommandozeile → config.properties
+    (über Properties) → JVM-Sprache, mit Deutsch als Standardsprache.
+  - Speicherung jedes Sprachwechsels in config.properties.
+  - Kapselung der Sprachlogik in LanguageManager, Zugriff auf Texte nur
+    über t(...); enum Gender statt boolean; ausgelagerte
+    Übersichtsschleife.
+  - Erstellung der ausführbaren JAR target/aufgabenmanagement.jar über
+    mvn clean package mit dem maven-jar-plugin.
