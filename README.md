@@ -1,11 +1,9 @@
-# AufgabenManagement – mehrsprachige Konsolenanwendung (I18N)
+Voici le fichier README.md révisé et mis à jour pour prendre en compte l'ensemble des modifications apportées aux fichiers de ressources (messages_de.properties, messages_fr.properties et messages_en.properties) :
 
-Die ursprüngliche Anwendung `AufgabenManagement.java` wurde mit `ResourceBundle`
-internationalisiert. Unterstützte Sprachen: **Deutsch (de)**, **Französisch (fr)**, **Englisch (en)**.
+AufgabenManagement – mehrsprachige Konsolenanwendung (I18N)
+Die ursprüngliche Anwendung AufgabenManagement.java wurde mit ResourceBundle internationalisiert. Unterstützte Sprachen: Deutsch (de), Französisch (fr), Englisch (en).
 
-## Projektstruktur
-
-```
+Projektstruktur
 AufgabenManagement/
 ├── pom.xml                                   Maven-Konfiguration (ausführbare JAR)
 ├── README.md
@@ -15,71 +13,50 @@ AufgabenManagement/
     │   ├── AufgabenManagement.java           Einstiegspunkt + Programmlogik (Eingabe, Übersicht)
     │   └── LanguageManager.java              Sprache ermitteln/wechseln, ResourceBundle, t(...)
     └── resources/
-        ├── messages_de.properties            deutsche Texte
-        ├── messages_fr.properties            französische Texte
-        └── messages_en.properties            englische Texte
-```
+        ├── messages_de.properties            deutsche Texte (Unicode-kodiert)
+        ├── messages_fr.properties            französische Texte (Unicode-kodiert)
+        └── messages_en.properties            englische Texte (Unicode-kodiert)
 
-`config.properties` wird beim ersten Sprachwechsel **im aktuellen Arbeitsverzeichnis** angelegt:
+config.properties wird beim ersten Sprachwechsel im aktuellen Arbeitsverzeichnis angelegt:
 
-```
 language=fr
-```
 
-## Bauen
-
+Bauen
 Voraussetzung: Java 17+ und Maven.
 
-```bash
 mvn clean package
-```
 
-Ergebnis: `target/aufgabenmanagement.jar` (die Sprachdateien sind in der JAR enthalten).
+Ergebnis: target/aufgabenmanagement.jar (die Sprachdateien sind in der JAR enthalten).
 
-## Starten
-
-```bash
+Starten
 java -jar target/aufgabenmanagement.jar        # Sprache automatisch ermitteln
 java -jar target/aufgabenmanagement.jar fr     # Französisch erzwingen
 java -jar target/aufgabenmanagement.jar en     # Englisch erzwingen
-```
 
-## Reihenfolge der Sprachwahl beim Start
+Reihenfolge der Sprachwahl beim Start
+Kommandozeilenargument (de, fr, en)
+zuletzt gewählte Sprache aus config.properties
+Sprache der JVM (Locale.getDefault())
+sonst Deutsch
+Ungültige Werte (z. B. java -jar ... xy oder language=zz in der Datei) werden mit einer übersetzten Meldung ignoriert; eine fehlende oder kaputte config.properties wird einfach übersprungen. Die erste Ausgabezeile zeigt, woher die Sprache kommt.
 
-1. Kommandozeilenargument (`de`, `fr`, `en`)
-2. zuletzt gewählte Sprache aus `config.properties`
-3. Sprache der JVM (`Locale.getDefault()`)
-4. sonst Deutsch
+Sprache zur Laufzeit wechseln
+Vor der Eingabe: Sprachcode eingeben (de/fr/en) oder Enter zum Beibehalten.
+Nach der Übersicht: Sprachcode eingeben – die Übersicht wird sofort in der neuen Sprache erneut angezeigt. Enter beendet das Programm.
+Jeder Wechsel wird in config.properties gespeichert und beim nächsten Start verwendet (sofern kein Kommandozeilenargument angegeben ist).
 
-Ungültige Werte (z. B. `java -jar ... xy` oder `language=zz` in der Datei) werden mit
-einer übersetzten Meldung ignoriert; eine fehlende oder kaputte `config.properties` wird
-einfach übersprungen. Die erste Ausgabezeile zeigt, woher die Sprache kommt.
+Wie funktioniert die I18N?
+LanguageManager.t("key") liefert den Text aus dem aktuellen ResourceBundle.
+LanguageManager.t("key", args...) formatiert Platzhalter mit MessageFormat sprachabhängig:
+Datum: {0,date,full} / {0,date,medium}
+Zeit: {0,time,short}
+Währung & Zahlen: {0,number,currency} / {0,number,0.##}
+Geschlechtsspezifische Anrede & Satzstruktur (overview.area): Nutzt choice basierend auf dem Geschlechtscode (m/w bzw. h/f), z. B. {2,choice,m#Herr {0}...|w#Frau {0}...}.
+Einzahl/Mehrzahl (overview.tasks): Nutzt choice, z. B. {1,choice,0#...|1#...|1<...}.
+Für das Laden wird ResourceBundle.Control.getNoFallbackControl(...) verwendet, damit Java nicht heimlich auf die Systemsprache ausweicht.
+Unicode-Escapes (\uXXXX): Zur sicheren systemübergreifenden Kompatibilität und Vermeidung von Codierungsproblemen werden Sonderzeichen, Umlaute (ä, ö, ü, ß), französische Akzente (é, è, ê, à, ç) und Anführungszeichen («, », „, “) in allen .properties-Dateien als Unicode-Sequenzen gespeichert.
+In den Mustern wird das typografische Apostroph (’ bzw. \u2019) anstelle des einfachen Hochkommas (') verwendet, da ein einfaches Hochkomma in MessageFormat eine Sonderfunktion (Escaping) besitzt.
+Hinweis zu Umlauten und Sonderzeichen in der Konsole
+Die Sprachdateien sind mit Unicode-Escapes (\uXXXX) formatiert und werden von Java korrekt geladen. Wenn Sonderzeichen in der Konsole fehlerhaft angezeigt werden, ist die Konsole nicht auf UTF-8 eingestellt. Abhilfe (Windows: vorher chcp 65001 ausführen):
 
-## Sprache zur Laufzeit wechseln
-
-- **Vor der Eingabe**: Sprachcode eingeben (`de`/`fr`/`en`) oder Enter zum Beibehalten.
-- **Nach der Übersicht**: Sprachcode eingeben – die Übersicht wird sofort in der neuen
-  Sprache erneut angezeigt. Enter beendet das Programm.
-
-Jeder Wechsel wird in `config.properties` gespeichert und beim nächsten Start verwendet
-(sofern kein Kommandozeilenargument angegeben ist).
-
-## Wie funktioniert die I18N?
-
-- `LanguageManager.t("key")` liefert den Text aus dem aktuellen `ResourceBundle`.
-- `LanguageManager.t("key", args...)` formatiert Platzhalter mit `MessageFormat`
-  sprachabhängig: Datum (`{0,date,full}`), Zahlen (`{0,number,#,##0.00}`) und
-  Einzahl/Mehrzahl (`{1,choice,0#...|1#...|1<...}`).
-- Für das Laden wird `ResourceBundle.Control.getNoFallbackControl(...)` verwendet, damit
-  Java nicht heimlich auf die Systemsprache ausweicht.
-- In den `.properties`-Dateien wird `’` statt `'` verwendet, weil ein einfaches
-  Hochkomma in `MessageFormat` eine Sonderbedeutung hat.
-
-## Hinweis zu Umlauten in der Konsole
-
-Die Sprachdateien sind UTF-8. Werden Umlaute als `?` angezeigt, ist die Konsole
-nicht auf UTF-8 eingestellt. Abhilfe (Windows: vorher `chcp 65001`):
-
-```bash
 java -Dstdout.encoding=UTF-8 -jar target/aufgabenmanagement.jar
-```
