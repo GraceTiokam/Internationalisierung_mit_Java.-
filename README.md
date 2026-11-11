@@ -1,5 +1,3 @@
-Voici le fichier README.md révisé et mis à jour pour prendre en compte l'ensemble des modifications apportées aux fichiers de ressources (messages_de.properties, messages_fr.properties et messages_en.properties) :
-
 AufgabenManagement – mehrsprachige Konsolenanwendung (I18N)
 Die ursprüngliche Anwendung AufgabenManagement.java wurde mit ResourceBundle internationalisiert. Unterstützte Sprachen: Deutsch (de), Französisch (fr), Englisch (en).
 
@@ -10,8 +8,8 @@ AufgabenManagement/
 ├── aufgabenmanagement.jar                    fertig gebaute JAR (Kopie aus target/)
 └── src/main/
     ├── java/aufgabenmanagement/
-    │   ├── AufgabenManagement.java           Einstiegspunkt + Programmlogik (Eingabe, Übersicht)
-    │   └── LanguageManager.java              Sprache ermitteln/wechseln, ResourceBundle, t(...)
+    │   └──  AufgabenManagement.java           Einstiegspunkt + Programmlogik (Eingabe, Übersicht)
+    │  
     └── resources/
         ├── messages_de.properties            deutsche Texte (Unicode-kodiert)
         ├── messages_fr.properties            französische Texte (Unicode-kodiert)
